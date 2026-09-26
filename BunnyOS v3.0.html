@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BunnyOS v2.0</title>
+    <style>
+        :root {
+            --background-gradient: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e8eaf6 100%);
+            --topbar-background: rgba(255, 255, 255, 0.7);
+            --topbar-text: #444444;
+            --window-background: rgba(255, 255, 255, 0.92);
+            --window-text: #333333;
+            --card-background: rgba(255, 255, 255, 0.75);
+            --border-color: rgba(255, 255, 255, 0.8);
+            --accent-color: #e91e63;
+            --icon-color: #000000;
+        }
+
+        body.dark-theme {
+            --background-gradient: linear-gradient(135deg, #121212 0%, #1a1c2e 50%, #0d1117 100%);
+            --topbar-background: rgba(20, 20, 25, 0.8);
+            --topbar-text: #ffffff;
+            --window-background: rgba(28, 28, 35, 0.92);
+            --window-text: #f0f0f0;
+            --card-background: rgba(40, 40, 52, 0.6);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --icon-color: #ffffff;
+        }
+
+        body {
+            background: var(--background-gradient);
+            margin: 0;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+            position: relative;
+            user-select: none;
+            transition: background 0.4s ease;
+        }
+
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--topbar-background);
+            backdrop-filter: blur(12px);
+            padding: 8px 20px;
+            box-sizing: border-box;
+            font-size: 14px;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--topbar-text);
+        }
+
+        .top-bar-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .top-bar-title .brand {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .top-bar-title .divider {
+            color: #b0bec5;
+            font-weight: 300;
+        }
+
+        .top-bar-title .version {
+            color: #78909c;
+        }
+
+        body.dark-theme .top-bar-title .version {
+            color: #b0bec5
+        }
+
+        #timeElement {
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .app-sidebar {
+            position: absolute;
+            top: 60px;
+            left: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 12px 10px;
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            z-index: 999;
+        }
+
+        body.dark-theme .app-sidebar {
+            background: rgba(30, 30, 40, 0.4);
+        }
+
+        .app-icon {
+            width: 46px;
+            height: 46px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-theme .app-icon {
+            background-color: rgba(50, 50, 65, 0.9);
+        }
+
+        .app-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .desktop-center-card {
+            position: absolute;
+            top: 52%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            background: var(--window-background);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+            border: 4px solid var(--border-color);
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 12px 16px 12px;
+            box-sizing: border-box;
+        }
+
+        .desktop-center-card img {
+            width: 100%;
+            height: 260px;
+            object-fit: cover;
+            border-radius: 18px;
+        }
+
+        .desktop-center-card .card-footer {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .window {
+            position: absolute;
+            background-color: var(--window-background);
+            color: var(--window-text);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            padding: 16px;
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 4px 12px 4px;
+            cursor: move;
+            font-weight: 700;
+            font-size: 15px;
+            line-height: 1;
+        }
+
+        .close-btn {
+            background-color: #ff5f56;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 11px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .settings-card {
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .settings-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .settings-select {
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            color: #333333;
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        body.dark-theme .settings-select {
+            background: #2a2a36;
+            color: #f0f0f0;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn-group {
+            display: flex;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 3px;
+            border-radius: 10px;
+            gap: 2px;
+        }
+
+        body.dark-theme .toggle-btn-group {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .toggle-btn {
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            background: transparent;
+            color: var(--window-text);
+            transition: all 0.2s ease;
+        }
+
+        .toggle-btn.active {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 6px rgba(233, 30, 99, 0.3);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .gallery-thumb {
+            width: 100%;
+            height: 85px;
+            object-fit: cover;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .gallery-thumb:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+        }
+
+        .coverflow-container {
+            position: relative;
+            height: 140px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 600px;
+            margin-bottom: 8px;
+        }
+
+        .cover-card {
+            position: absolute;
+            width: 105px;
+            height: 105px;
+            border-radius: 14px;
+            object-fit: cover;
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            background: #eee;
+            cursor: pointer;
+            -webkit-box-reflect: below 2px linear-gradient(transparent, transparent 75%, rgba(255, 255, 255, 0.25));
+        }
+
+        .cover-card.left {
+            transform: translateX(-70px) rotateY(40deg) scale(0.8);
+            opacity: 0.6;
+            filter: brightness(0.8);
+        }
+
+        .cover-card.center {
+            transform: translateX(0) rotateY(0deg) scale(1.05);
+            opacity: 1;
+            z-index: 2;
+            filter: brightness(1);
+        }
+
+        .cover-card.right {
+            transform: translateX(70px) rotateY(-40deg) scale(0.8);
+            opacity: 0.6;
+            filter: brightness(0.8);
+        }
+
+        .cover-card.left:hover {
+            transform: translateX(-65px) rotateY(25deg) scale(0.88) translateY(-4px);
+            opacity: 0.9;
+            filter: brightness(0.95);
+        }
+
+        .cover-card.center:hover {
+            transform: translateX(0) rotateY(0deg) scale(1.12) translateY(-6px);
+            box-shadow: 0 14px 28px rgba(233, 30, 99, 0.3);
+        }
+
+        .cover-card.right:hover {
+            transform: translateX(65px) rotateY(-25deg) scale(0.88) translateY(-4px);
+            opacity: 0.9;
+            filter: brightness(0.95);
+        }
+
+        .control-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-theme .control-btn {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .control-btn svg {
+            width: 16px;
+            height: 16px;
+            display: block;
+            fill: var(--icon-color);
+            transition: fill 0.2s ease;
+        }
+
+        .control-btn.active {
+            background: var(--accent-color) !important;
+            box-shadow: 0 0 10px rgba(233, 30, 99, 0.5);
+        }
+
+        .control-btn.active svg {
+            fill: #ffffff !important;
+        }
+
+        .play-main-btn {
+            background: var(--accent-color);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .play-main-btn:hover {
+            transform: scale(1.06);
+        }
+
+        .play-main-btn svg {
+            width: 20px;
+            height: 20px;
+            display: block;
+            fill: #ffffff;
+        }
+
+        .upload-box {
+            margin-top: 10px;
+            padding: 8px;
+            border: 2px dashed rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        body.dark-theme .upload-box {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .floating-emoji {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: floatUpFade 1.2s ease-out forwards;
+        }
+
+        @keyframes floatUpFade {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(0.8);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(1.4);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="topBar" class="top-bar">
+        <div class="top-bar-title">
+            <span>🐇</span>
+            <span class="brand">BunnyOS</span>
+            <span class="divider">|</span>
+            <span class="version">v3.0 NewJeans Edition</span>
+        </div>
+        <span id="timeElement">--:--:--</span>
+    </div>
+
+    <div class="app-sidebar">
+        <div class="app-icon" onclick="openWindow('browserWindow')" title="Daily Dose Of Bunny">🔍</div>
+        <div class="app-icon" onclick="openWindow('musicWindow')" title="Hopify">🎧</div>
+        <div class="app-icon" onclick="openWindow('galleryWindow')" title="Photos">📸</div>
+        <div class="app-icon" onclick="openWindow('settingsWindow')" title="Settings">⚙️</div>
+    </div>
+
+    <div class="desktop-center-card">
+        <img id="mainCenterImage" src="https://media.tenor.com/nzXLz1Alk5gAAAAM/bunny-eating.gif" alt="Bunny OS Desktop" />
+        <div class="card-footer">
+            <span>🐇</span> BunnyOS
+        </div>
+    </div>
+
+    <div id="musicWindow" class="window" style="top: 70px; left: 180px; width: 330px; text-align: center;" onclick="bringToFront(this)">
+        <div id="musicWindowheader" class="window-header">
+            <span>🎵 Music Player</span>
+            <button class="close-btn" onclick="closeWindow('musicWindow')">✕</button>
+        </div>
+
+        <div class="coverflow-container">
+            <img id="cardLeft" class="cover-card left" src="" onclick="prevTrack()" />
+            <img id="cardCenter" class="cover-card center" src="" />
+            <img id="cardRight" class="cover-card right" src="" onclick="nextTrack()" />
+        </div>
+
+        <h3 id="songTitle" style="margin: 6px 0 2px 0; font-size: 17px;">Super Shy</h3>
+        <p id="artistName" style="margin: 0 0 10px 0; font-size: 12px; color: var(--accent-color); font-weight: 600;">NewJeans</p>
+
+        <audio id="audioElement" onended="handleTrackEnd()"></audio>
+
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <button class="control-btn" id="shuffleBtn" onclick="toggleShuffle()" title="Shuffle">
+                <svg viewBox="0 0 24 24">
+                    <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
+                </svg>
+            </button>
+            <button class="control-btn" onclick="prevTrack()" title="Previous">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                </svg>
+            </button>
+            <button class="play-main-btn" id="playBtn" onclick="togglePlay()" title="Play / Pause">
+                <svg id="playIcon" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+            </button>
+            <button class="control-btn" onclick="nextTrack()" title="Next">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                </svg>
+            </button>
+            <button class="control-btn" id="repeatBtn" onclick="toggleRepeat()" title="Repeat">
+                <svg viewBox="0 0 24 24">
+                    <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            📁 Click to Load Local MP3s / Covers
+        </div>
+        <input type="file" id="fileInput" accept="audio/*,image/*" multiple style="display: none;" onchange="handleFileSelect(event)">
+    </div>
+
+    <div id="galleryWindow" class="window" style="top: 80px; left: 220px; width: 330px;" onclick="bringToFront(this)">
+        <div id="galleryWindowheader" class="window-header">
+            <span>🖼️ Bunny Gallery</span>
+            <button class="close-btn" onclick="closeWindow('galleryWindow')">✕</button>
+        </div>
+        <div style="font-size: 12px; margin-bottom: 6px; color: var(--accent-color); font-weight: 600;">Click an image to set wallpaper:</div>
+        <div class="gallery-grid">
+            <img class="gallery-thumb" src="https://64.media.tumblr.com/c2bacc8e48ae13f230a9aca68125cf93/c8f2766fee973bba-a9/s540x810/12205c49b130facc78b37abd3f59a8d76bd90963.gif" onclick="setCenterImage(this.src, event)" />
+            <img class="gallery-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQaFFnijdda719tWWZ-BNLc3YHacDwS1uC8GyfBGFFSn91U9XK_sjuuppc&s=10" onclick="setCenterImage(this.src, event)" />
+            <img class="gallery-thumb" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_Y9nPaRXs7YAsN1mg1klpuTD2EU1jU0PkBAeoKcwyEUn5pVpgbwUfJNc&s=10" onclick="setCenterImage(this.src, event)" />
+            <img class="gallery-thumb" src="https://media.tenor.com/Is0troUZB_IAAAAe/cute-rabbit-rabbit.png" onclick="setCenterImage(this.src, event)" />
+            <img class="gallery-thumb" src="https://media.tenor.com/nzXLz1Alk5gAAAAM/bunny-eating.gif" onclick="setCenterImage(this.src, event)" />
+            <img class="gallery-thumb" src="https://i.pinimg.com/originals/b4/31/66/b4316617f09be813cdc726c44132d739.gif" onclick="setCenterImage(this.src, event)" />
+        </div>
+    </div>
+
+    <div id="browserWindow" class="window" style="top: 90px; left: 300px; width: 480px; height: 380px;" onclick="bringToFront(this)">
+        <div id="browserWindowheader" class="window-header">
+            <span>★ Daily Dose Of Bunny</span>
+            <button class="close-btn" onclick="closeWindow('browserWindow')">✕</button>
+        </div>
+        <div style="display: flex; gap: 9px; margin-bottom: 10px; align-items: center;">
+            <input type="text" id="bunnyWebUrl" value="https://dailybunny.org/" readonly style="flex: 1; padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(0, 0, 0, 0.1); font-size: 12px; outline: none; background: rgba(255, 255, 255, 0.8);" />
+            <button onclick="reloadBunnyWeb()" style="background: var(--accent-color); color: white; border: none; padding: 6px 14px; border-radius: 10px; font-weight: 600; cursor: pointer;">Refresh 🐇</button>
+            <button onclick="window.open('https://dailybunny.org/', '_blank')" style="background: rgba(225, 225, 225, 0.8); color: var(--window-text); border: none; padding: 6px 10px; border-radius: 10px; font-weight: 600; cursor: pointer;" title="Open in new tab">↗</button>
+        </div>
+        <iframe id="bunnyIframe" src="https://dailybunny.org/" style="width: 100%; height: 280px; border: none; border-radius: 14px; background: white"></iframe>
+    </div>
+
+    <div id="settingsWindow" class="window" style="top: 100px; left: 340px; width: 330px;" onclick="bringToFront(this)">
+        <div id="settingsWindowheader" class="window-header">
+            <span style="display: flex; align-items: center; gap: 6px;">⚙️ Settings</span>
+            <button class="close-btn" onclick="closeWindow('settingsWindow')">✕</button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-label">🎨 Desktop Theme</div>
+            <select class="settings-select" onchange="changeTheme(this.value)">
+                <option value="pastel">🌸 Pastel Dreams</option>
+                <option value="sunset">🌅 Sunset Glow</option>
+                <option value="ocean">🌊 Ocean Breeze</option>
+            </select>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-label">🌓 System Mode</div>
+            <div class="toggle-btn-group">
+                <button id="lightModeBtn" class="toggle-btn active" onclick="setLightDark('light')">Light</button>
+                <button id="darkModeBtn" class="toggle-btn" onclick="setLightDark('dark')">Dark</button>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-select">⏰ Clock Font</div>
+            <select class="settings-select" onchange="changeClockFont(this.value)">
+                <option value="monospace">Monospace</option>
+                <option value="sans-serif">Sans-Serif</option>
+                <option value="serif">Serif</option>
+            </select>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-label">Top Status Bar</div>
+            <div class="toggle-btn-group">
+                <button id="showBarBtn" class="toggle-btn active" onclick="toggleTopBar(true)">Show</button>
+                <button id="hideBarBtn" class="toggle-btn" onclick="toggleTopBar(false)">Hide</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var highestZ = 100;
+
+        function updateTime() {
+            document.getElementById("timeElement").innerText = new Date().toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        function openWindow(id) {
+            var win = document.getElementById(id);
+            win.style.display = "flex";
+            bringToFront(win);
+        }
+        
+        function closeWindow(id) {
+            document.getElementById(id).style.display = "none";
+        }
+
+        function bringToFront(win) {
+            highestZ++;
+            win.style.zIndex = highestZ;
+        }
+
+        function changeTheme(themeName) {
+            var root = document.documentElement;
+            if (themeName === 'pastel') {
+                root.style.setProperty('--background-gradient', 'linear-gradient(135deg, #fce4ec 0%, #f3e5f5 50%, #e8eaf6 100%)');
+            } else if (themeName === 'sunset') {
+                root.style.setProperty('--background-gradient', 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #feada6 100%)');
+            } else if (themeName === 'ocean') {
+                root.style.setProperty('--background-gradient', 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 50%, #e0c3fc 100%)');
+            }
+        }
+
+        function changeClockFont(fontFamily) {
+            document.getElementById("timeElement").style.fontFamily = fontFamily;
+        }
+
+        function setCenterImage(src, e) {
+            document.getElementById("mainCenterImage").src = src;
+
+            var emojis = ['🐇', '🐰', '✨', '💖', '🥕'];
+            var clickX = e ? e.clientX : window.innerWidth / 2;
+            var clickY = e ? e.clientY : window.innerHeight / 2;
+
+            for (var i = 0; i < 6; i++) {
+                (function() {
+                    var el = document.createElement("div");
+                    el.className = "floating-emoji";
+                    el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                    var offsetX = (Math.random() - 0.5) * 80;
+                    var offsetY = (Math.random() - 0.5) * 40;
+                    el.style.left = (clickX + offsetX) + "px";
+                    el.style.top = (clickY + offsetY) + "px";
+                    document.body.appendChild(el);
+
+                    setTimeout(function() {
+                        el.remove();
+                    }, 1200);
+                })();
+            }
+        }
+        
+        function reloadBunnyWeb() {
+            var iframe = document.getElementById("bunnyIframe");
+            iframe.src = "https://dailybunny.org/?r=" + Math.random();
+        }
+
+        var playlist = [{
+            title: "Super Shy",
+            artist: "NewJeans",
+            src: "",
+            cover: "https://media.tenor.com/nzXlz1Alk5gAAAAM/bunny-eating.gif"
+        }];
+        var trackIdx = 0;
+        var isShuffle = false;
+        var isRepeat = false;
+        var audio = document.getElementById("audioElement");
+
+        function updateCoverflow() {
+            var leftIdx = (trackIdx -1 + playlist.length) % playlist.length;
+            var rightIdx = (trackIdx + 1) % playlist.length;
+
+            document.getElementById("cardLeft").src = playlist[leftIdx].cover || "";
+            document.getElementById("cardCenter").src = playlist[trackIdx].cover || "";
+            document.getElementById("cardRight").src = playlist[rightIdx].cover || "";
+
+            document.getElementById("songTitle").innerText = playlist[trackIdx].title;
+            document.getElementById("artistName").innerText = playlist[trackIdx].artist;
+
+            if (playlist[trackIdx].src) {
+                audio.src = playlist[trackIdx].src;
+                audio.play();
+                document.getElementById("playIcon").innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            }
+        }
+
+        function togglePlay() {
+            if (!audio.src) return;
+            if (audio.paused) {
+                audio.play();
+                document.getElementById("playIcon").innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            } else {
+                audio.pause();
+                document.getElementById("playIcon").innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            document.getElementById("shuffleBtn").classList.toggle("active", isShuffle);
+        }
+
+        function toggleRepeat() {
+            isRepeat = !isRepeat;
+            document.getElementById("repeatBtn").classList.toggle("active", isRepeat);
+        }
+
+        function nextTrack() {
+            if (isShuffle && playlist.length > 1) {
+                var next;
+                do {
+                    next = Math.floor(Math.random() * playlist.length);
+                } while (next === trackIdx); 
+                trackIdx = next;
+            } else {
+                trackIdx = (trackIdx + 1) % playlist.length;
+            }
+            updateCoverflow();
+        }
+
+        function prevTrack() {
+            trackIdx = (trackIdx -1 + playlist.length) % playlist.length;
+            updateCoverflow();
+        }
+
+        function handleTrackEnd() {
+            if (isRepeat) {
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                nextTrack();
+            }
+        }
+
+        function handleFileSelect(e) {
+            var files = Array.from(e.target.files);
+            var audioFiles = files.filter(f => f.type.startsWith('audio/'));
+            var imageFiles = files.filter(f => f.type.startsWith('image/'));
+
+            if (audioFiles.length === 0) return;
+
+            var defaultCover = "https://media.tenor.com/nzXLz1Alk5gAAAAM/bunny-eating.gif";
+
+            var newTracks= audioFiles.map((audioFile, index) => {
+                var baseName = audioFile.name.replace(/\.[^/.]+$/, "").toLowerCase().trim();
+
+                var matchedImage = imageFiles.find(imgFile => {
+                    var imgName = imgFile.name.replace(/\.[^/.]+$/, "").toLowerCase().trim();
+                    return imgName === baseName;
+                });
+
+                var coverUrl = defaultCover;
+                if (matchedImage) {
+                    coverUrl = URL.createObjectURL(matchedImage);
+                } else if (imageFiles[index]) {
+
+                    coverUrl = URL.createObjectURL(imageFiles[index]);
+                } else if (imageFiles.length > 0) {
+
+                    coverUrl = URL.createObjectURL(imageFiles[0]);
+                }
+
+                return {
+                    title: audioFile.name.replace(/\.[^/.]+$/, ""),
+                    artist: "Local Track",
+                    src: URL.createObjectURL(audioFile),
+                    cover: coverUrl
+                };
+            });
+
+            playlist = newTracks;
+            trackIdx = 0;
+            updateCoverflow();
+        }
+
+        function setLightDark(mode) {
+            if (mode === 'dark') {
+                document.body.classList.add("dark-theme");
+                document.getElementById("darkModeBtn").classList.add("active");
+                document.getElementById("lightModeBtn").classList.remove("active");
+            } else {
+                document.body.classList.remove("dark-theme");
+                document.getElementById("lightModeBtn").classList.add("active");
+                document.getElementById("darkModeBtn").classList.remove("active");
+            }
+        }
+
+        function toggleTopBar(show) {
+            document.getElementById("topBar").style.display = show ? "flex" : "none";
+            document.getElementById("showBarBtn").classList.toggle("active", show);
+            document.getElementById("hideBarBtn").classList.toggle("active", !show);
+        }
+
+        function dragElement(element) {
+            var p1= 0,
+                p2 = 0,
+                p3 = 0,
+                p4 = 0;
+            var header = document.getElementById(element.id + "header");
+            if (header) header.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                bringToFront(element);
+                p3 = e.clientX;
+                p4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                p1 = p3 - e.clientX;
+                p2 = p4 - e.clientY;
+                p3 = e.clientX;
+                p4 = e.clientY;
+                element.style.top = (element.offsetTop - p2) +"px";
+                element.style.left = (element.offsetLeft - p1) + "px";
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        dragElement(document.getElementById("musicWindow"));
+        dragElement(document.getElementById("galleryWindow"));
+        dragElement(document.getElementById("browserWindow"));
+        dragElement(document.getElementById("settingsWindow"));
+    </script>
+</body>
+
+</html>
