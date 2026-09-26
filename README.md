@@ -10,6 +10,7 @@ Features:
 ---
 Installation:
 All you need to do is download the latest version (BunnyOS v3.0) and open it, it will run in any modern browser such as google chrome, firefox etc.
+Alternatively, you can open this link to run it: https://bunnyos.netlify.app
 ---
 Disclamer:
 I did use AI (Google Gemini) for any errors/spelling mistakes I faced. I originally tried using youtube to play music but I could not figure out how to get it to work so I also used ai for the code to import local files but that is all.
